@@ -1,0 +1,12 @@
+#Ticket
+[logger]
+level = "DEBUG"
+
+[http-server]
+port = "8090"
+host = "0.0.0.0"
+
+[storage]
+#db = "in_memory"
+db = "sql"
+dsn = "postgresql://postgres:postgres@postgres:5432/ticket?sslmode=disable"
