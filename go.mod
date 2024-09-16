@@ -4,6 +4,7 @@ go 1.22.5
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/stretchr/testify v1.9.0

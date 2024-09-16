@@ -13,6 +13,7 @@ import (
 	"github.com/cronnoss/tk-api/internal/model"
 	"github.com/cronnoss/tk-api/internal/server"
 	"github.com/cronnoss/tk-api/internal/storage/models"
+	"github.com/gorilla/mux"
 )
 
 type ctxKeyID int
@@ -95,33 +96,80 @@ func (s *Server) GetShows(w http.ResponseWriter, r *http.Request) {
 	srv.RespondOK(showListResponse, w, r)
 }
 
+func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
+	// Step 1: Make a GET request to the remote API
+	vars := mux.Vars(r)
+	id := vars["id"]
+	remoteURL := "https://leadbook.ru/test-task-api/shows/" + id + "/events"
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, remoteURL, nil)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to create request: %w", err), w, r)
+		return
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to do request: %w", err), w, r)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Step 2: Decode the response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to read response body: %w", err), w, r)
+		return
+	}
+
+	var eventListResponse model.EventListResponse
+	if err := json.Unmarshal(body, &eventListResponse); err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to decode response: %w", err), w, r)
+		return
+	}
+
+	// Step 3: Iterate over events and store them in the local service
+	for _, event := range eventListResponse.Response {
+		_, err := s.app.CreateEvent(r.Context(), models.Event{
+			ID:     event.ID,
+			ShowID: event.ShowID,
+			Date:   event.Date,
+		})
+		if err != nil {
+			srv.RespondWithError(fmt.Errorf("failed to create event: %w", err), w, r)
+			return
+		}
+	}
+
+	srv.RespondOK(eventListResponse, w, r)
+}
+
 func (s *Server) Start(ctx context.Context) error {
 	addr := net.JoinHostPort(s.host, s.port)
 	midLogger := NewMiddlewareLogger()
-	mux := http.NewServeMux()
 
-	mux.Handle("/healthz", midLogger.setCommonHeadersMiddleware(
+	router := mux.NewRouter()
+
+	router.Handle("/healthz", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK healthz\n"))
 		}))))
 
-	mux.Handle("/readiness", midLogger.setCommonHeadersMiddleware(
+	router.Handle("/readiness", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK readiness\n"))
 		}))))
 
-	mux.Handle("/shows", midLogger.setCommonHeadersMiddleware(
+	router.Handle("/shows", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(s.GetShows))))
-	/*mux.Handle("/shows/{id:[0-9]+}/events", midLogger.setCommonHeadersMiddleware(
+	router.Handle("/shows/{id:[0-9]+}/events", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(s.GetEvents))))
-	mux.Handle("/events/{id:[0-9]+}/places", midLogger.setCommonHeadersMiddleware(
-		midLogger.loggingMiddleware(http.HandlerFunc(s.GetPlaces))))*/
+	/*mux.Handle("/events/{id:[0-9]+}/places", midLogger.setCommonHeadersMiddleware(
+	midLogger.loggingMiddleware(http.HandlerFunc(s.GetPlaces))))*/
 
 	s.srv = http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           router,
 		ReadHeaderTimeout: 2 * time.Second,
 		BaseContext: func(_ net.Listener) context.Context {
 			bCtx := context.WithValue(ctx, KeyLoggerID, s.log)

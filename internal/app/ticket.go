@@ -37,9 +37,9 @@ type Storage interface {
 	GetShows(ctx context.Context) ([]models.Show, error)
 	CreateShows(ctx context.Context, shows []models.Show) ([]models.Show, error)
 	CreateShow(ctx context.Context, shows models.Show) (models.Show, error)
-	// GetEvents(ctx context.Context) ([]models.Event, error)
-	// CreateEvents(ctx context.Context, events []models.Event) ([]models.Event, error)
-	// CreateEvent(ctx context.Context, event models.Event) ([]models.Event, error)
+	GetEvents(ctx context.Context) ([]models.Event, error)
+	CreateEvents(ctx context.Context, events []models.Event) ([]models.Event, error)
+	CreateEvent(ctx context.Context, event models.Event) (models.Event, error)
 	// GetPlaces(ctx context.Context) ([]models.Place, error)
 	// CreatePlaces(ctx context.Context, places []models.Place) ([]models.Place, error)
 	// CreatePlace(ctx context.Context, place models.Place) (models.Place, error)
@@ -66,6 +66,24 @@ func (t *Ticket) CreateShow(ctx context.Context, show models.Show) (models.Show,
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	return t.storage.CreateShow(ctx, show)
+}
+
+func (t *Ticket) GetEvents(ctx context.Context) ([]models.Event, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.GetEvents(ctx)
+}
+
+func (t *Ticket) CreateEvents(ctx context.Context, events []models.Event) ([]models.Event, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.CreateEvents(ctx, events)
+}
+
+func (t *Ticket) CreateEvent(ctx context.Context, event models.Event) (models.Event, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.CreateEvent(ctx, event)
 }
 
 func NewTicket(log server.Logger, conf TicketConf, storage Storage) (*Ticket, error) {

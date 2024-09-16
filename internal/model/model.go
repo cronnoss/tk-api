@@ -25,7 +25,7 @@ type PlaceResponse struct {
 	Y           float64 `json:"y"`
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
-	IsAvailable bool    `json:"is_available"` // nolint64: tagliatelle
+	IsAvailable bool    `json:"is_available"` // nolint: tagliatelle
 }
 
 type PlaceListResponse struct {

@@ -5,9 +5,9 @@ import (
 )
 
 type Event struct {
-	ID        int64
-	ShowID    int64
-	Date      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        int64     `db:"id"`
+	ShowID    int64     `db:"show_id"`
+	Date      string    `db:"date"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }

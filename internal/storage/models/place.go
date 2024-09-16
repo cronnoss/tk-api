@@ -5,12 +5,12 @@ import (
 )
 
 type Place struct {
-	ID          int64
-	X           float64
-	Y           float64
-	Width       float64
-	Height      float64
-	IsAvailable bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int64     `db:"id"`
+	X           float64   `db:"x"`
+	Y           float64   `db:"y"`
+	Width       float64   `db:"width"`
+	Height      float64   `db:"height"`
+	IsAvailable bool      `db:"is_available"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
 }
