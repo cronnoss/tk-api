@@ -93,7 +93,7 @@ func (s *Server) GetShows(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	srv.RespondOK(showListResponse, w, r)
+	srv.RespondOK(showListResponse.Response, w, r)
 }
 
 func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +139,56 @@ func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	srv.RespondOK(eventListResponse, w, r)
+	srv.RespondOK(eventListResponse.Response, w, r)
+}
+
+func (s *Server) GetPlaces(w http.ResponseWriter, r *http.Request) {
+	// Step 1: Make a GET request to the remote API
+	vars := mux.Vars(r)
+	id := vars["id"]
+	remoteURL := "https://leadbook.ru/test-task-api/events/" + id + "/places"
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, remoteURL, nil)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to create request: %w", err), w, r)
+		return
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to do request: %w", err), w, r)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Step 2: Decode the response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to read response body: %w", err), w, r)
+		return
+	}
+
+	var placeListResponse model.PlaceListResponse
+	if err := json.Unmarshal(body, &placeListResponse); err != nil {
+		srv.RespondWithError(fmt.Errorf("failed to decode response: %w", err), w, r)
+		return
+	}
+
+	// Step 3: Iterate over places and store them in the local service
+	for _, place := range placeListResponse.Response {
+		_, err := s.app.CreatePlace(r.Context(), models.Place{
+			ID:          place.ID,
+			X:           place.X,
+			Y:           place.Y,
+			Width:       place.Width,
+			Height:      place.Height,
+			IsAvailable: place.IsAvailable,
+		})
+		if err != nil {
+			srv.RespondWithError(fmt.Errorf("failed to create place: %w", err), w, r)
+			return
+		}
+	}
+
+	srv.RespondOK(placeListResponse.Response, w, r)
 }
 
 func (s *Server) Start(ctx context.Context) error {
@@ -164,8 +213,8 @@ func (s *Server) Start(ctx context.Context) error {
 		midLogger.loggingMiddleware(http.HandlerFunc(s.GetShows))))
 	router.Handle("/shows/{id:[0-9]+}/events", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(s.GetEvents))))
-	/*mux.Handle("/events/{id:[0-9]+}/places", midLogger.setCommonHeadersMiddleware(
-	midLogger.loggingMiddleware(http.HandlerFunc(s.GetPlaces))))*/
+	router.Handle("/events/{id:[0-9]+}/places", midLogger.setCommonHeadersMiddleware(
+		midLogger.loggingMiddleware(http.HandlerFunc(s.GetPlaces))))
 
 	s.srv = http.Server{
 		Addr:              addr,

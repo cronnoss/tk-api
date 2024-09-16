@@ -126,6 +126,7 @@ func (s *Storage) CreateEvent(ctx context.Context, event models.Event) (models.E
 	var insertedEvent models.Event
 	err := s.db.GetContext(ctx, &insertedEvent,
 		`INSERT INTO events (id, show_id, date) VALUES ($1, $2, $3)
+	   	ON CONFLICT (id) DO UPDATE SET updated_at = now()
 		RETURNING *`,
 		event.ID, event.ShowID, event.Date)
 	if err != nil {
@@ -133,4 +134,47 @@ func (s *Storage) CreateEvent(ctx context.Context, event models.Event) (models.E
 	}
 
 	return insertedEvent, nil
+}
+
+// GetPlaces returns places.
+func (s *Storage) GetPlaces(ctx context.Context) ([]models.Place, error) {
+	var places []models.Place
+	query := `SELECT id, x, y, width, height, is_available FROM places`
+	if err := s.db.SelectContext(ctx, &places, query); err != nil {
+		return nil, fmt.Errorf("failed to get places: %w", err)
+	}
+	return places, nil
+}
+
+// CreatePlaces creates places.
+func (s *Storage) CreatePlaces(ctx context.Context, places []models.Place) ([]models.Place, error) {
+	insertedPlaces := make([]models.Place, 0, len(places))
+	for _, place := range places {
+		var newPlace models.Place
+		err := s.db.GetContext(ctx, &newPlace,
+			`INSERT INTO places (x, y, width, height, is_available) VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (x, y, width, height) DO UPDATE SET updated_at = now()
+			RETURNING *`,
+			place.X, place.Y, place.Width, place.Height, place.IsAvailable)
+		if err != nil {
+			return insertedPlaces, nil // nolint: nilerr
+		}
+		insertedPlaces = append(insertedPlaces, newPlace)
+	}
+	return insertedPlaces, nil
+}
+
+// CreatePlace creates a place.
+func (s *Storage) CreatePlace(ctx context.Context, place models.Place) (models.Place, error) {
+	var insertedPlace models.Place
+	err := s.db.GetContext(ctx, &insertedPlace,
+		`INSERT INTO places (id, x, y, width, height, is_available) VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (id) DO UPDATE SET updated_at = now()
+	   	RETURNING *`,
+		place.ID, place.X, place.Y, place.Width, place.Height, place.IsAvailable)
+	if err != nil {
+		return insertedPlace, nil // nolint: nilerr
+	}
+
+	return insertedPlace, nil
 }

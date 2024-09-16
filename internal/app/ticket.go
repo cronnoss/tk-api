@@ -40,9 +40,9 @@ type Storage interface {
 	GetEvents(ctx context.Context) ([]models.Event, error)
 	CreateEvents(ctx context.Context, events []models.Event) ([]models.Event, error)
 	CreateEvent(ctx context.Context, event models.Event) (models.Event, error)
-	// GetPlaces(ctx context.Context) ([]models.Place, error)
-	// CreatePlaces(ctx context.Context, places []models.Place) ([]models.Place, error)
-	// CreatePlace(ctx context.Context, place models.Place) (models.Place, error)
+	GetPlaces(ctx context.Context) ([]models.Place, error)
+	CreatePlaces(ctx context.Context, places []models.Place) ([]models.Place, error)
+	CreatePlace(ctx context.Context, place models.Place) (models.Place, error)
 }
 
 type Server interface {
@@ -84,6 +84,24 @@ func (t *Ticket) CreateEvent(ctx context.Context, event models.Event) (models.Ev
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	return t.storage.CreateEvent(ctx, event)
+}
+
+func (t *Ticket) GetPlaces(ctx context.Context) ([]models.Place, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.GetPlaces(ctx)
+}
+
+func (t *Ticket) CreatePlaces(ctx context.Context, places []models.Place) ([]models.Place, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.CreatePlaces(ctx, places)
+}
+
+func (t *Ticket) CreatePlace(ctx context.Context, place models.Place) (models.Place, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return t.storage.CreatePlace(ctx, place)
 }
 
 func NewTicket(log server.Logger, conf TicketConf, storage Storage) (*Ticket, error) {
