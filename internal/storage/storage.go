@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	memorystorage "github.com/cronnoss/tk-api/internal/storage/memory"
 	"github.com/cronnoss/tk-api/internal/storage/models"
 	sqlstorage "github.com/cronnoss/tk-api/internal/storage/sql"
 )
@@ -30,8 +31,8 @@ type Storage interface {
 
 func NewStorage(conf Conf) Storage {
 	switch conf.DB {
-	// case "in_memory":
-	// 	return memorystorage.New()
+	case "in_memory":
+		return memorystorage.New()
 	case "sql":
 		return sqlstorage.New(conf.DSN)
 	}
