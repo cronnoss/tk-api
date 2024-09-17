@@ -20,7 +20,7 @@ help:
 	@echo ${Green}"make generate"${Color_Off}" to generate"
 	@echo
 	@echo ${Red}"Or use docker-compose:"
-	@echo ${Green}"make up"${Color_Off}" to run docker-compose"
+	@echo ${Green}"make dc"${Color_Off}" to run docker-compose"
 	@echo ${Green}"make down"${Color_Off}" to stop docker-compose"
 	@echo ${Green}"make destroy"${Color_Off}" to stop docker-compose and remove volumes"
 	@echo

@@ -42,7 +42,7 @@ func NewServer(log Logger, app server.Application, host, port string) *Server {
 	return &Server{log: log, app: app, host: host, port: port}
 }
 
-func (s *Server) helperDecode(stream io.ReadCloser, w http.ResponseWriter, data interface{}) error {
+func (s *Server) helperDecode(stream io.ReadCloser, w http.ResponseWriter, data interface{}) error { // nolint: unused
 	decoder := json.NewDecoder(stream)
 	if err := decoder.Decode(&data); err != nil {
 		s.log.Errorf("Can't decode json:%v\n", err)
@@ -83,6 +83,11 @@ func (s *Server) GetShows(w http.ResponseWriter, r *http.Request) {
 
 	// Step 3: Iterate over shows and store them in the local service
 	for _, show := range showListResponse.Response {
+		if err := showListResponse.ShowListResponseValidate(); err != nil {
+			srv.RespondWithError(fmt.Errorf("failed to validate response: %w", err), w, r)
+			return
+		}
+
 		_, err := s.app.CreateShow(r.Context(), models.Show{
 			ID:   show.ID,
 			Name: show.Name,
@@ -128,6 +133,11 @@ func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
 
 	// Step 3: Iterate over events and store them in the local service
 	for _, event := range eventListResponse.Response {
+		if err := eventListResponse.EventListResponseValidate(); err != nil {
+			srv.RespondWithError(fmt.Errorf("failed to validate response: %w", err), w, r)
+			return
+		}
+
 		_, err := s.app.CreateEvent(r.Context(), models.Event{
 			ID:     event.ID,
 			ShowID: event.ShowID,
@@ -174,6 +184,11 @@ func (s *Server) GetPlaces(w http.ResponseWriter, r *http.Request) {
 
 	// Step 3: Iterate over places and store them in the local service
 	for _, place := range placeListResponse.Response {
+		if err := placeListResponse.PlaceListResponseValidate(); err != nil {
+			srv.RespondWithError(fmt.Errorf("failed to validate response: %w", err), w, r)
+			return
+		}
+
 		_, err := s.app.CreatePlace(r.Context(), models.Place{
 			ID:          place.ID,
 			X:           place.X,

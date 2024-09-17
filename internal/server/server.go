@@ -2,10 +2,17 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/cronnoss/tk-api/internal/storage/models"
+)
+
+var (
+	ErrID     = errors.New("wrong ID")
+	ErrUserID = errors.New("wrong UserID")
+	ErrName   = errors.New("wrong Name")
 )
 
 //go:generate mockery --name Logger

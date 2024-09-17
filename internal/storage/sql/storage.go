@@ -3,8 +3,10 @@ package sqlstorage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/cronnoss/tk-api/internal/model"
 	"github.com/cronnoss/tk-api/internal/storage/models"
 	_ "github.com/jackc/pgx/stdlib" // nolint: revive
 	"github.com/jmoiron/sqlx"
@@ -18,6 +20,19 @@ type Storage struct {
 type ShowSQL struct {
 	ID   sql.NullInt64
 	Name sql.NullString
+}
+
+var ErrShowNotFound = errors.New("show not found")
+
+func ConvertSQLShowToStorageShow(s ShowSQL) (show model.ShowResponse) {
+	if s.ID.Valid {
+		show.ID = s.ID.Int64
+	}
+
+	if s.Name.Valid {
+		show.Name = s.Name.String
+	}
+	return show
 }
 
 func New(dsn string) *Storage {
@@ -43,7 +58,7 @@ func (s *Storage) Close(ctx context.Context) error {
 	return nil
 }
 
-func stringNull(s string) sql.NullString {
+func stringNull(s string) sql.NullString { // nolint: unused
 	if len(s) == 0 {
 		return sql.NullString{}
 	}
