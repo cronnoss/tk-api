@@ -1,3 +1,5 @@
+//go:generate mockery
+
 package server
 
 import (
@@ -15,7 +17,6 @@ var (
 	ErrName   = errors.New("wrong Name")
 )
 
-//go:generate mockery --name Logger
 type Logger interface {
 	Fatalf(format string, a ...interface{})
 	Errorf(format string, a ...interface{})
@@ -24,7 +25,6 @@ type Logger interface {
 	Debugf(format string, a ...interface{})
 }
 
-//go:generate mockery --name Application
 type Application interface {
 	GetShows(ctx context.Context) ([]models.Show, error)
 	CreateShows(ctx context.Context, shows []models.Show) ([]models.Show, error)
