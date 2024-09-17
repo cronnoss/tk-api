@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/cronnoss/tickets-api/docs" // nolint: revive
 	"github.com/cronnoss/tk-api/internal/common/srv"
 	"github.com/cronnoss/tk-api/internal/model"
 	"github.com/cronnoss/tk-api/internal/server"
 	"github.com/cronnoss/tk-api/internal/storage/models"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type ctxKeyID int
@@ -53,6 +55,16 @@ func (s *Server) helperDecode(stream io.ReadCloser, w http.ResponseWriter, data 
 	return nil
 }
 
+// @Summary Get shows
+// @Tags shows
+// @Description Get shows from remote API and store them in the local service
+// @ID get-shows
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} ShowListResponse
+// @Failure 400,404 {object} server.ErrorResponse
+// @Failure 500 {object} server.ErrorResponse
+// @Router /shows [get].
 func (s *Server) GetShows(w http.ResponseWriter, r *http.Request) {
 	// Step 1: Make a GET request to the remote API
 	remoteURL := "https://leadbook.ru/test-task-api/shows"
@@ -101,6 +113,17 @@ func (s *Server) GetShows(w http.ResponseWriter, r *http.Request) {
 	srv.RespondOK(showListResponse.Response, w, r)
 }
 
+// @Summary Get events
+// @Tags events
+// @Description Get events by show ID
+// @ID get-events
+// @Accept  json
+// @Produce  json
+// @Param id path int true "show ID"
+// @Success 200 {object} EventListResponse
+// @Failure 400,404 {object} server.ErrorResponse
+// @Failure 500 {object} server.ErrorResponse
+// @Router /shows/{id}/events [get].
 func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
 	// Step 1: Make a GET request to the remote API
 	vars := mux.Vars(r)
@@ -152,6 +175,17 @@ func (s *Server) GetEvents(w http.ResponseWriter, r *http.Request) {
 	srv.RespondOK(eventListResponse.Response, w, r)
 }
 
+// @Summary Get places
+// @Tags places
+// @Description Get places by event ID
+// @ID get-places
+// @Accept  json
+// @Produce  json
+// @Param id path int true "event ID"
+// @Success 200 {object} PlaceListResponse
+// @Failure 400,404 {object} server.ErrorResponse
+// @Failure 500 {object} server.ErrorResponse
+// @Router /events/{id}/places [get].
 func (s *Server) GetPlaces(w http.ResponseWriter, r *http.Request) {
 	// Step 1: Make a GET request to the remote API
 	vars := mux.Vars(r)
@@ -206,6 +240,9 @@ func (s *Server) GetPlaces(w http.ResponseWriter, r *http.Request) {
 	srv.RespondOK(placeListResponse.Response, w, r)
 }
 
+// @title Ticket API
+// @version 1
+// @description API Server for remote Tickets Application.
 func (s *Server) Start(ctx context.Context) error {
 	addr := net.JoinHostPort(s.host, s.port)
 	midLogger := NewMiddlewareLogger()
@@ -223,6 +260,8 @@ func (s *Server) Start(ctx context.Context) error {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK readiness\n"))
 		}))))
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	router.Handle("/shows", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(s.GetShows))))
