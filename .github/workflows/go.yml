@@ -30,7 +30,10 @@ jobs:
       run: go install github.com/mattn/goveralls@latest
 
     - name: Build
-      run: go build -v cmd/*.go
+      run: |
+        for file in cmd/*.go; do
+          go build -v "$file"
+        done
 
     - name: Test
       run: |
